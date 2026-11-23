@@ -1,0 +1,20 @@
+# Python y logs temporales
+__pycache__/
+*.py[cod]
+*$py.class
+*.bak
+servidor_stdout.log
+servidor_stderr.log
+
+# Archivos de túneles locales temporales y accesos directos
+cloudflared.exe
+QR_Acceso_Celular.png
+url_celular.txt
+Abrir_en_Celular.html
+*.lnk
+
+# Bandejas de procesamiento local (se mantienen las carpetas con .gitkeep)
+1_Bandeja_Importacion_Manual/*
+!1_Bandeja_Importacion_Manual/.gitkeep
+2_Historial_Procesados/*
+!2_Historial_Procesados/.gitkeep

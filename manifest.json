@@ -1,0 +1,26 @@
+{
+  "name": "Bodega Central — Depto. Eléctrico",
+  "short_name": "Bodega Central",
+  "description": "Control de Inventario, Guías de Recepción y Registro de Pallets",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "bodega-central-app",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EAEFF4",
+  "theme_color": "#586F86",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+==============================================================================
+   BUSCADOR E INVENTARIO CENTRALIZADO - BODEGA CENTRAL (BOD. 56 Y 121)
+==============================================================================
+
+Este sistema centraliza desde iConstruye:
+1) Stock Actual (Bodega > Reportes > Inventario):
+   - N° 56 Departamento Electrico
+   - N° 121 Departamento Electrico
+2) Trazabilidad de Guias de Recepcion (Bodega > Reportes > Movimiento de Bodega):
+   - Tipo de movimiento: Recepcion (ultimos 2 anos)
+   - N° de Documento (Guia), Fecha, Bodega y Cantidad ingresada por material.
+
+------------------------------------------------------------------------------
+ACCESOS PRINCIPALES EN ESTA CARPETA:
+------------------------------------------------------------------------------
+
+1. Buscador_Bodega_Central.html  (o acceso directo "Buscador Bodega Central")
+   - Abre en tu navegador (PC, tablet o telefono) el buscador interactivo
+     con Dashboard, filtros por codigo, descripcion, N° de Guia, tipo de
+     articulo, bodega (56 / 121 / ambas) y alertas de stock bajo.
+   - En cada material veras sus ultimas Guias de Recepcion y el boton para
+     abrir el historial completo de guias recibidas.
+   - Haz clic sobre cualquier codigo o N° de Guia para copiarlo al portapapeles.
+
+2. Actualizar Stock desde iConstruye.lnk
+   - Conecta automaticamente a iConstruye, descarga el inventario y los
+     movimientos de Recepcion (2 anos) de Bodega 56 y 121, actualiza el
+     Excel consolidado y regenera Buscador_Bodega_Central.html.
+
+3. Inventario_Consolidado_Bodega_Central.xlsx
+   - Libro Excel consolidado con hojas:
+     * Consolidado 56+121 (incluye resumen de guias)
+     * Bodega 56
+     * Bodega 121
+     * Alertas Stock Bajo
+     * Detalle Guias Recepcion (1 fila por guia recibida)
+
+4. 1_Bandeja_Importacion_Manual (y boton "Importar Excel/CSV" en la web)
+   - Permite cargar manualmente reportes de Inventario o Movimientos
+     descargados desde iConstruye.
+
+==============================================================================

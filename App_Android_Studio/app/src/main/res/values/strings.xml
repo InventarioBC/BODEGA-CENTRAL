@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Bodega Central</string>
+    <string name="loading">Cargando Bodega Central...</string>
+    <string name="error_network">No se pudo conectar al servidor de bodega.</string>
+    <string name="retry">Reintentar</string>
+</resources>

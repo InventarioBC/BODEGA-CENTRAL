@@ -1,0 +1,73 @@
+
+
+=== INICIO DE SERVICIO 2026-11-12 09:28:44 ===
+127.0.0.1 - - [12/Nov/2026 09:28:50] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-12 09:31:08 ===
+127.0.0.1 - - [12/Nov/2026 09:31:15] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-17 13:02:10 ===
+127.0.0.1 - - [17/Nov/2026 13:02:15] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-17 13:40:53 ===
+127.0.0.1 - - [17/Nov/2026 13:40:59] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-20 11:06:31 ===
+127.0.0.1 - - [20/Nov/2026 11:06:37] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-20 11:47:28 ===
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+[OK] cloudflared iniciado con PID: 15816
+[OK] Servidor escuchando también en puerto 80 estándar (http://192.168.1.18/)
+====================================================================
+  SERVIDOR BODEGA CENTRAL — DEPTO. ELÉCTRICO GUZMÁN Y LARRAÍN
+====================================================================
+  Acceso Local PC:       http://localhost:8080/
+  Acceso Wi-Fi Bodega:   http://192.168.1.18:8080/
+  Conectando túnel HTTPS para acceso celular...
+====================================================================
+  Presiona Ctrl+C para detener el servidor.
+====================================================================
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+
+====================================================================
+  ¡TÚNEL SEGURO HTTPS CLOUDFLARE CONECTADO EXITOSAMENTE!
+====================================================================
+  Acceso Celular (5G / 4G):  https://repair-philosophy-crop-september.trycloudflare.com
+  Acceso Wi-Fi Bodega:       http://192.168.1.18:8080/
+====================================================================
+
+127.0.0.1 - - [20/Nov/2026 11:47:35] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-20 11:49:23 ===
+
+
+=== INICIO DE SERVICIO 2026-11-20 12:39:25 ===
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+[OK] cloudflared iniciado con PID: 20204
+[OK] Servidor escuchando también en puerto 80 estándar (http://192.168.1.18/)
+====================================================================
+  SERVIDOR BODEGA CENTRAL — DEPTO. ELÉCTRICO GUZMÁN Y LARRAÍN
+====================================================================
+  Acceso Local PC:       http://localhost:8080/
+  Acceso Wi-Fi Bodega:   http://192.168.1.18:8080/
+  Conectando túnel HTTPS para acceso celular...
+====================================================================
+  Presiona Ctrl+C para detener el servidor.
+====================================================================
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+
+====================================================================
+  ¡TÚNEL SEGURO HTTPS CLOUDFLARE CONECTADO EXITOSAMENTE!
+====================================================================
+  Acceso Celular (5G / 4G):  https://episode-arcade-vendors-killing.trycloudflare.com
+  Acceso Wi-Fi Bodega:       http://192.168.1.18:8080/
+====================================================================
+
+127.0.0.1 - - [20/Nov/2026 12:39:30] "GET /api/status HTTP/1.1" 200 -
