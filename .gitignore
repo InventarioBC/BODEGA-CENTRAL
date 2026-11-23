@@ -1,8 +1,14 @@
+# Archivos sensibles y credenciales
+*api_key*
+*.key
+*.token
+
 # Python y logs temporales
 __pycache__/
 *.py[cod]
 *$py.class
 *.bak
+*.log
 servidor_stdout.log
 servidor_stderr.log
 
