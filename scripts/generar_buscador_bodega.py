@@ -711,6 +711,21 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
     catalog_json = json.dumps(items, ensure_ascii=False)
     master_catalog_json = json.dumps(MASTER_CATALOG, ensure_ascii=False)
 
+    tunnel_url = ""
+    url_txt_file = BASE_DIR / "url_celular.txt"
+    if url_txt_file.exists():
+        try:
+            for l in url_txt_file.read_text(encoding="utf-8").splitlines():
+                if "trycloudflare.com" in l or "lhr.life" in l:
+                    m = re.search(r"https://[^\s]+", l)
+                    if m:
+                        tunnel_url = m.group(0).split("?")[0].strip()
+                        break
+        except Exception:
+            pass
+    if not tunnel_url:
+        tunnel_url = "https://testament-collectables-cooling-supervisor.trycloudflare.com"
+
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -722,9 +737,9 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
     <meta name="apple-mobile-web-app-title" content="Bodega Central">
     <meta name="theme-color" content="#586F86">
     <title>Inventario Bodega Central — Stock, Guías y Traspasos (56 & 121) — Depto. Eléctrico Guzmán y Larraín</title>
-    <link rel="icon" type="image/png" href="/icon.png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1790,6 +1805,15 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
     <script>
         let INVENTORY_DATA = {catalog_json};
         let ALL_CATALOG = {master_catalog_json};
+        const BACKEND_TUNNEL_URL = '{tunnel_url}';
+        function getApiUrl(endpoint) {{
+            if (!endpoint.startsWith('/')) endpoint = '/' + endpoint;
+            if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {{
+                const customServer = localStorage.getItem('bodega_backend_url') || BACKEND_TUNNEL_URL;
+                return customServer.replace(/\/+$/, '') + endpoint;
+            }}
+            return endpoint;
+        }}
         let whFilter = 'all';
         let stFilter = 'all';
         let currentMatches = [];
@@ -1956,7 +1980,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         async function fetchReadyToShipServer() {{
             try {{
-                const res = await fetch('/api/ready_to_ship?t=' + Date.now());
+                const res = await fetch(getApiUrl('/api/ready_to_ship?t=' + Date.now()));
                 if (res.ok) {{
                     const data = await res.json();
                     if (Array.isArray(data.pallets)) {{
@@ -1976,7 +2000,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         async function syncReadyToShipServer(action, payload) {{
             try {{
-                const res = await fetch('/api/ready_to_ship', {{
+                const res = await fetch(getApiUrl('/api/ready_to_ship'), {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{
@@ -3185,7 +3209,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 document.getElementById('camPallet').value = getNextPalletNameClient();
             }}
             try {{
-                const res = await fetch('/api/next_pallet');
+                const res = await fetch(getApiUrl('/api/next_pallet'));
                 if (res.ok) {{
                     const data = await res.json();
                     if (data.next_pallet_name) {{
@@ -3198,7 +3222,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
         async function checkServerStatus() {{
             const badge = document.getElementById('cameraServerStatus');
             try {{
-                const res = await fetch('/api/status');
+                const res = await fetch(getApiUrl('/api/status'));
                 if (res.ok) {{
                     const data = await res.json();
                     badge.className = 'badge bg-success px-3 py-2';
@@ -3384,9 +3408,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             }}
 
             try {{
-                const uploadUrl = window.location.protocol.startsWith('http')
-                    ? '/api/delete_pallet'
-                    : 'http://localhost:8080/api/delete_pallet';
+                const uploadUrl = getApiUrl('/api/delete_pallet');
 
                 const res = await fetch(uploadUrl, {{
                     method: 'POST',
@@ -3416,9 +3438,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
             let result = null;
             try {{
-                const scanUrl = window.location.protocol.startsWith('http')
-                    ? '/api/scan_pallet'
-                    : 'http://localhost:8080/api/scan_pallet';
+                const scanUrl = getApiUrl('/api/scan_pallet');
 
                 const response = await fetch(scanUrl, {{
                     method: 'POST',
@@ -3881,9 +3901,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 foto_base64: currentCapturedBase64
             }};
 
-            const uploadUrl = window.location.protocol.startsWith('http')
-                ? '/api/upload_pallet'
-                : 'http://localhost:8080/api/upload_pallet';
+            const uploadUrl = getApiUrl('/api/upload_pallet');
 
             showToast('Subiendo ambos códigos al pallet...');
 
@@ -4669,10 +4687,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 statusBanner.style.display = 'block';
             }}
 
-            try {{
-                const detailUrl = window.location.protocol.startsWith('http')
-                    ? `/api/pallet_detail?pallet=${{encodeURIComponent(cleanName)}}`
-                    : `http://localhost:8080/api/pallet_detail?pallet=${{encodeURIComponent(cleanName)}}`;
+                const detailUrl = getApiUrl(`/api/pallet_detail?pallet=${{encodeURIComponent(cleanName)}}`);
                 const resp = await fetch(detailUrl);
                 const data = await resp.json();
 
@@ -4831,9 +4846,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 materiales: window.palletMaterialsList
             }};
 
-            const uploadUrl = window.location.protocol.startsWith('http')
-                ? '/api/upload_pallet'
-                : 'http://localhost:8080/api/upload_pallet';
+            const uploadUrl = getApiUrl('/api/upload_pallet');
 
             try {{
                 const response = await fetch(uploadUrl, {{
@@ -4931,9 +4944,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Asociando foto...';
             }}
 
-            const linkUrl = window.location.protocol.startsWith('http')
-                ? '/api/link_pallet_photo'
-                : 'http://localhost:8080/api/link_pallet_photo';
+            const linkUrl = getApiUrl('/api/link_pallet_photo');
 
             try {{
                 const resp = await fetch(linkUrl, {{
@@ -5027,9 +5038,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 materiales: window.palletMaterialsList
             }};
 
-            const uploadUrl = window.location.protocol.startsWith('http')
-                ? '/api/upload_pallet'
-                : 'http://localhost:8080/api/upload_pallet';
+            const uploadUrl = getApiUrl('/api/upload_pallet');
 
             try {{
                 const response = await fetch(uploadUrl, {{
@@ -5252,10 +5261,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 return;
             }}
 
-            try {{
-                const delUrl = window.location.protocol.startsWith('http')
-                    ? '/api/delete_pallet'
-                    : 'http://localhost:8080/api/delete_pallet';
+                const delUrl = getApiUrl('/api/delete_pallet');
 
                 await fetch(delUrl, {{
                     method: 'POST',
@@ -5353,9 +5359,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 foto: targetP.file
             }};
 
-            const editUrl = window.location.protocol.startsWith('http')
-                ? '/api/edit_pallet'
-                : 'http://localhost:8080/api/edit_pallet';
+            const editUrl = getApiUrl('/api/edit_pallet');
 
             try {{
                 const resp = await fetch(editUrl, {{
@@ -5694,7 +5698,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         async function fetchServerPallets() {{
             try {{
-                const resp = await fetch('/api/pallets');
+                const resp = await fetch(getApiUrl('/api/pallets'));
                 if (resp.ok) {{
                     const data = await resp.json();
                     if (data && data.success && data.pallets) {{
@@ -5737,7 +5741,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         async function checkForUpdates() {{
             try {{
-                const res = await fetch('/api/status?t=' + Date.now(), {{ cache: 'no-store' }});
+                const res = await fetch(getApiUrl('/api/status?t=' + Date.now()), {{ cache: 'no-store' }});
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.last_updated) {{
@@ -5789,10 +5793,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
             showToast('⏳ Sincronizando inventario con el computador...');
 
-            try {{
-                const syncUrl = window.location.protocol.startsWith('http')
-                    ? '/api/sync_inventory?t=' + Date.now()
-                    : 'http://localhost:8080/api/sync_inventory?t=' + Date.now();
+                const syncUrl = getApiUrl('/api/sync_inventory?t=' + Date.now());
 
                 const resp = await fetch(syncUrl, {{ method: 'GET' }});
                 if (!resp.ok) {{
@@ -5854,9 +5855,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const keys = Object.keys(store);
             if (!keys.length) return;
 
-            const uploadUrl = window.location.protocol.startsWith('http')
-                ? '/api/upload_pallet'
-                : 'http://localhost:8080/api/upload_pallet';
+            const uploadUrl = getApiUrl('/api/upload_pallet');
 
             for (const code of keys) {{
                 const item = store[code];
@@ -5980,7 +5979,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             setTimeout(syncPendingPalletsToServer, 2500);
 
             if ('serviceWorker' in navigator) {{
-                navigator.serviceWorker.register('/sw.js?v=35').then(reg => {{
+                navigator.serviceWorker.register('sw.js?v=35').then(reg => {{
                     reg.update();
                     console.log('[PWA] Service Worker v35 activo:', reg.scope);
                 }}).catch(err => {{
