@@ -3,11 +3,11 @@
 
 const CACHE_NAME = 'bodega-central-v35';
 const PRECACHE_ASSETS = [
-  '/',
-  '/Buscador_Bodega_Central.html',
-  '/manifest.json',
-  '/icon.png',
-  '/apple-touch-icon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png',
+  './apple-touch-icon.png'
 ];
 
 // 1. INSTALACIÓN: Pre-cachear el cascarón de la app para que siempre cargue al abrir desde la pantalla de inicio
@@ -20,10 +20,10 @@ self.addEventListener('install', event => {
         try {
           await cache.add(item);
         } catch (err) {
-          console.warn('[SW v31] No se pudo precachear:', item, err);
+          console.warn('[SW v35] No se pudo precachear:', item, err);
         }
       }
-      console.log('[SW v31] Cascarón PWA precacheado exitosamente.');
+      console.log('[SW v35] Cascarón PWA precacheado exitosamente.');
     })
   );
 });
@@ -51,36 +51,35 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
 
   // Ignorar peticiones API (siempre van en vivo al servidor)
-  if (req.method !== 'GET' || url.pathname.startsWith('/api/')) {
+  if (req.method !== 'GET' || url.pathname.includes('/api/')) {
     return;
   }
 
   // Para navegación principal (al abrir desde icono de inicio o recargar)
-  if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+  if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
-      // Intentar red primero con timeout de 2.5s para no bloquear si hay lentitud o túnel reconectando
+      // Intentar red primero con timeout de 2.5s para no bloquear
       Promise.race([
         fetch(req, { cache: 'no-cache' }).then(networkResp => {
           if (networkResp && networkResp.status === 200) {
             const respClone = networkResp.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(req, respClone);
-              cache.put('/Buscador_Bodega_Central.html', networkResp.clone());
-              cache.put('/', networkResp.clone());
+              cache.put('./index.html', networkResp.clone());
+              cache.put('./', networkResp.clone());
             });
             return networkResp;
           }
-          // Si el servidor respondió con 502/503/504 (túnel caído), lanzar error para caer en caché
           throw new Error('Respuesta de red inválida: ' + (networkResp ? networkResp.status : 'desconocida'));
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de red 2500ms')), 2500))
       ]).catch(err => {
-        console.warn('[SW v30] Red falló o demoró, cargando desde caché PWA local:', err.message);
-        return caches.match('/Buscador_Bodega_Central.html')
-          .then(cached => cached || caches.match('/'))
+        console.warn('[SW v35] Red demoró, cargando desde caché PWA local:', err.message);
+        return caches.match(req)
+          .then(cached => cached || caches.match('./index.html'))
+          .then(cached => cached || caches.match('./'))
           .then(cached => {
             if (cached) return cached;
-            // Si no hay nada en caché, devolver mensaje amigable
             return new Response(
               '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Bodega Central</title></head><body style="font-family:sans-serif;text-align:center;padding:40px 20px;background:#EAEFF4;color:#2D3748;"><h2>Bodega Central</h2><p>Conectando con el servidor...</p><button onclick="window.location.reload()" style="background:#4D6E87;color:white;border:none;padding:12px 24px;border-radius:12px;font-size:16px;cursor:pointer;">Reintentar</button></body></html>',
               { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
