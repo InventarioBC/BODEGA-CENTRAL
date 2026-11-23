@@ -907,18 +907,69 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {{
-            body {{ padding: 8px !important; padding-bottom: 80px !important; }}
-            .header-box {{ padding: 14px 16px !important; margin-bottom: 12px !important; border-radius: 12px !important; }}
-            .header-box h3 {{ font-size: 1.15rem !important; }}
+            html, body {{
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+                width: 100% !important;
+            }}
+            body {{
+                padding: 6px !important;
+                padding-bottom: 85px !important;
+            }}
+            .container-fluid {{
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }}
+            .header-box {{
+                padding: 12px 14px !important;
+                margin-bottom: 10px !important;
+                border-radius: 12px !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }}
+            .header-box h3 {{ font-size: 1.05rem !important; }}
             .header-subtitle {{ display: none !important; }}
-            .card-stat {{ padding: 10px 8px !important; border-radius: 10px !important; }}
-            .card-stat h3 {{ font-size: 1.3rem !important; margin: 2px 0 !important; }}
-            .card-stat span {{ font-size: 0.72rem !important; }}
-            .card-stat small {{ font-size: 0.68rem !important; }}
-            .dispatch-bar {{ padding: 8px 12px !important; font-size: 0.8rem !important; margin-bottom: 12px !important; }}
-            .search-container {{ padding: 12px !important; margin-bottom: 14px !important; }}
-            .search-input-lg {{ font-size: 0.94rem !important; padding: 9px 38px 9px 40px !important; }}
-            .mobile-card {{ padding: 12px !important; margin-bottom: 10px !important; }}
+            .segmented-wrapper {{
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-bottom: 8px !important;
+            }}
+            .segmented-nav {{
+                display: flex !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 3px !important;
+                border-radius: 10px !important;
+                box-sizing: border-box !important;
+            }}
+            .seg-btn {{
+                flex: 1 1 50% !important;
+                padding: 7px 6px !important;
+                font-size: 0.84rem !important;
+                gap: 4px !important;
+                min-width: 0 !important;
+            }}
+            .seg-btn span {{
+                font-size: 0.84rem !important;
+                white-space: nowrap !important;
+            }}
+            .camera-hero-card {{
+                border-radius: 12px !important;
+                margin-bottom: 10px !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }}
+            .camera-hero-card h4 {{ font-size: 1.05rem !important; }}
+            .card-stat {{ padding: 8px 6px !important; border-radius: 10px !important; }}
+            .card-stat h3 {{ font-size: 1.2rem !important; margin: 2px 0 !important; }}
+            .card-stat span {{ font-size: 0.70rem !important; }}
+            .card-stat small {{ font-size: 0.65rem !important; }}
+            .dispatch-bar {{ padding: 8px 10px !important; font-size: 0.78rem !important; margin-bottom: 10px !important; }}
+            .search-container {{ padding: 10px !important; margin-bottom: 12px !important; }}
+            .search-input-lg {{ font-size: 0.90rem !important; padding: 8px 34px 8px 36px !important; }}
+            .mobile-card {{ padding: 10px !important; margin-bottom: 8px !important; }}
         }}
 
         .toast-copy {{
@@ -982,35 +1033,34 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
         </div>
 
         <!-- Main Navigation Controls (Segmented Control - Sin viñetas de lista) -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 mt-1">
-            <div class="segmented-wrapper">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2 mt-1">
+            <div class="segmented-wrapper m-0">
                 <div class="segmented-nav">
                     <button type="button" class="seg-btn active" id="btnTabCamera" onclick="switchMainTab('camera')">
                         <i class="bi bi-box-seam-fill text-warning"></i>
-                        <span>Bultos y Pallets</span>
-                        <span class="badge-mini-new">Principal</span>
+                        <span class="d-none d-md-inline">Bultos y Pallets</span>
+                        <span class="d-inline d-md-none">Bultos</span>
                     </button>
                     <button type="button" class="seg-btn" id="btnTabInventory" onclick="switchMainTab('inventory')">
                         <i class="bi bi-table"></i>
-                        <span>Inventario y Guías</span>
+                        <span class="d-none d-md-inline">Inventario y Guías</span>
+                        <span class="d-inline d-md-none">Inventario</span>
                     </button>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-primary btn-sm fw-bold rounded-pill px-3 shadow-sm d-flex align-items-center gap-1" id="btnInstallAppHeader" onclick="openInstallAppModal()" title="Descargar como aplicación para celular (Play Store y App Store)">
+            <div class="d-flex align-items-center gap-1 gap-md-2 flex-wrap">
+                <button class="btn btn-primary btn-sm fw-bold rounded-pill px-2 px-md-3 shadow-sm d-flex align-items-center gap-1" id="btnInstallAppHeader" onclick="openInstallAppModal()" title="Descargar como aplicación para celular (Play Store y App Store)">
                     <i class="bi bi-cloud-arrow-down-fill text-warning fs-6"></i>
-                    <span>📲 Descargar App</span>
+                    <span class="d-none d-sm-inline">📲 Descargar App</span>
+                    <span class="d-inline d-sm-none">App</span>
                 </button>
-                <button id="btnHeaderForceRefresh" class="btn btn-outline-secondary btn-sm fw-bold rounded-pill px-3 shadow-sm d-flex align-items-center gap-1" onclick="forceAppRefresh()" title="Forzar recarga completa y limpiar caché del navegador">
+                <button id="btnHeaderForceRefresh" class="btn btn-outline-secondary btn-sm fw-bold rounded-pill px-2 px-md-3 shadow-sm d-flex align-items-center gap-1" onclick="forceAppRefresh()" title="Forzar recarga completa y limpiar caché del navegador">
                     <i class="bi bi-arrow-clockwise"></i>
-                    <span class="d-none d-sm-inline">Limpiar Caché</span>
+                    <span class="d-none d-md-inline">Limpiar Caché</span>
                 </button>
-                <button id="btnHeaderSync" class="btn btn-sync-pastel btn-sm fw-bold rounded-pill px-3 shadow-sm d-flex align-items-center gap-1" onclick="syncAndUpdateInventory(this)" title="Actualizar y sincronizar inventario con el computador">
+                <button id="btnHeaderSync" class="btn btn-sync-pastel btn-sm fw-bold rounded-pill px-2 px-md-3 shadow-sm d-flex align-items-center gap-1" onclick="syncAndUpdateInventory(this)" title="Actualizar y sincronizar inventario con el computador">
                     <i class="bi bi-arrow-repeat fs-6"></i>
-                    <span id="btnHeaderSyncText">Actualizar / Sincronizar</span>
-                </button>
-                <button class="btn btn-qr-pastel btn-sm fw-semibold rounded-pill px-3 shadow-sm" onclick="openQrModal()" title="Abrir en celular o tablet">
-                    <i class="bi bi-qr-code-scan me-1"></i>Acceso Celular
+                    <span id="btnHeaderSyncText"><span class="d-none d-sm-inline">Actualizar / </span>Sincronizar</span>
                 </button>
             </div>
         </div>
@@ -1020,10 +1070,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             <!-- Hero Banner con Control de Bultos y Botón Registrar Nuevo Bulto -->
             <div class="card border-0 shadow-sm mb-3 camera-hero-card">
                 <div class="card-body p-3 p-md-4 text-white">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
-                            <h4 class="fw-bold mb-1"><i class="bi bi-box-seam-fill me-2 text-warning"></i>Control de Bultos y Pallets en Bodega Central</h4>
-                            <p class="mb-0 text-white-50 small">
+                            <h4 class="fw-bold mb-1"><i class="bi bi-box-seam-fill me-2 text-warning"></i>Control de Bultos y Pallets</h4>
+                            <p class="mb-0 text-white-50 small d-none d-sm-block">
                                 Visualiza fotos, ubicaciones y contenido de cada bulto. Marca bultos completos o parciales para enviar a obra.
                             </p>
                         </div>
@@ -1035,9 +1085,6 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             <span id="cameraServerStatus" class="badge bg-success px-3 py-2">
                                 <i class="bi bi-broadcast me-1"></i>Servidor Activo
                             </span>
-                            <button type="button" class="btn btn-outline-light btn-sm" onclick="openQrModal()">
-                                <i class="bi bi-qr-code me-1"></i>Acceso Celular
-                            </button>
                         </div>
                     </div>
                 </div>
