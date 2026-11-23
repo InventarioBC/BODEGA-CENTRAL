@@ -6026,7 +6026,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             setTimeout(syncPendingPalletsToServer, 2500);
 
             if ('serviceWorker' in navigator) {{
-                navigator.serviceWorker.register('sw.js?v=35').then(reg => {{
+                navigator.serviceWorker.register('sw.js?v=36').then(reg => {{
                     reg.update();
                     console.log('[PWA] Service Worker v35 activo:', reg.scope);
                 }}).catch(err => {{

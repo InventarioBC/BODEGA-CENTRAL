@@ -1,7 +1,7 @@
 // Service Worker para Bodega Central (Guzmán y Larraín Depto. Eléctrico)
-// Versión 35: Carga instantánea como App Móvil (PWA) con soporte offline y auto-actualización.
+// Versión 36: Carga instantánea como App Móvil (PWA) con soporte offline y auto-actualización.
 
-const CACHE_NAME = 'bodega-central-v35';
+const CACHE_NAME = 'bodega-central-v36';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
