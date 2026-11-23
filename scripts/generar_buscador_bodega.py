@@ -5793,9 +5793,8 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 const data = await res.json();
                 if (data.last_updated) {{
                     const serverUpdateMs = data.last_updated * 1000;
-                    if (serverUpdateMs > APP_PAGE_LOAD_TS + 1500) {{
-                        console.log('[AUTO-UPDATE] Se detectaron cambios en el servidor, actualizando automáticamente...');
-                        await syncAndUpdateInventory();
+                    if (serverUpdateMs > APP_PAGE_LOAD_TS + 5000) {{
+                        showUpdateBanner();
                     }}
                 }}
             }} catch(e) {{}}
@@ -6026,16 +6025,11 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             setTimeout(syncPendingPalletsToServer, 2500);
 
             if ('serviceWorker' in navigator) {{
-                navigator.serviceWorker.register('sw.js?v=36').then(reg => {{
+                navigator.serviceWorker.register('sw.js?v=37').then(reg => {{
                     reg.update();
-                    console.log('[PWA] Service Worker v35 activo:', reg.scope);
+                    console.log('[PWA] Service Worker v37 registrado:', reg.scope);
                 }}).catch(err => {{
                     console.warn('[PWA] Service Worker notice:', err);
-                }});
-
-                navigator.serviceWorker.addEventListener('controllerchange', () => {{
-                    console.log('[PWA] Nueva versión activada desde el servidor, recargando...');
-                    window.location.reload();
                 }});
             }}
 
