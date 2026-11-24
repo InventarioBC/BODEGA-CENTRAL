@@ -13,7 +13,7 @@ Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | ForEach-Ob
 }
 Start-Sleep -Seconds 1
 
-# Iniciar proceso con Start-Process sin dobles comillas redundantes
-Start-Process -FilePath $PythonExe -ArgumentList @($ServerScript, "8080") -WorkingDirectory $BaseDir
+# Iniciar proceso con Start-Process con comillas en la ruta
+Start-Process -FilePath $PythonExe -ArgumentList "`"$ServerScript`" 8080" -WorkingDirectory $BaseDir
 
 Write-Host "[OK] Proceso pythonw lanzado."

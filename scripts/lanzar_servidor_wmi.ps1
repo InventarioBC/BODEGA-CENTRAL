@@ -31,9 +31,10 @@ if (Test-Path $UrlFile) {
 
 # Preparar comando de lanzamiento
 $cmd = "`"$PythonExe`" -u `"$ServerScript`" $Port"
-Write-Host "[INFO] Lanzando servidor via WMI Win32_Process.Create..."
+$baseDir = "G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL"
 $res = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
     CommandLine = $cmd
+    CurrentDirectory = $baseDir
 }
 
 if ($res.ReturnValue -ne 0) {
