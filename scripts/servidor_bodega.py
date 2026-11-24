@@ -856,6 +856,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
             cantidad = data.get("cantidad_pallet", data.get("cantidad", 0))
             guia = str(data.get("guia", "")).strip()
             proveedor = str(data.get("proveedor", "")).strip()
+            obra = str(data.get("obra", "")).strip()
             descripcion = str(data.get("descripcion", "")).strip()
             foto_base64 = data.get("foto_base64", "")
 
@@ -948,6 +949,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                     "guia": guia,
                     "cantidad_pallet": float(c_qty) if c_qty else 0,
                     "proveedor": proveedor,
+                    "obra": obra,
                     "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M"),
                 }
 
@@ -970,6 +972,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                     "guia": guia,
                     "cantidad_pallet": float(c_qty) if c_qty else 0,
                     "proveedor": proveedor,
+                    "obra": obra,
                     "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M"),
                 }
                 saved_codes.append(c_code)
@@ -996,6 +999,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "codigos": saved_codes,
                 "pallet": pallet,
                 "ubicacion": ubicacion,
+                "obra": obra,
                 "filename": filename,
                 "foto_url": f"FOTOS/{filename}" if filename else "",
             })
@@ -1102,6 +1106,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
             foto = ""
             guia = ""
             prov = ""
+            obra = ""
 
             for code, entry in mapping.items():
                 pallets_list = entry.get("pallets", [])
@@ -1118,6 +1123,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                             "cantidad": p.get("cantidad_pallet", entry.get("cantidad_pallet", 0)),
                             "guia": p.get("guia", ""),
                             "proveedor": p.get("proveedor", ""),
+                            "obra": p.get("obra", entry.get("obra", "")),
                             "foto": p_foto,
                         })
                         if not rack and p.get("ubicacion"):
@@ -1128,6 +1134,11 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                             guia = p.get("guia")
                         if not prov and p.get("proveedor"):
                             prov = p.get("proveedor")
+                        if not obra and p.get("obra"):
+                            obra = p.get("obra")
+
+            if not obra and mapping.get(pallet_name, {}).get("obra"):
+                obra = mapping.get(pallet_name, {}).get("obra")
 
             self.send_json({
                 "success": True,
@@ -1137,6 +1148,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "foto": foto,
                 "guia": guia,
                 "proveedor": prov,
+                "obra": obra,
                 "materiales": matching_materials,
             })
         except Exception as e:
@@ -1159,6 +1171,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
             cantidad = data.get("cantidad_pallet", 0)
             guia = str(data.get("guia", "")).strip()
             proveedor = str(data.get("proveedor", "")).strip()
+            obra = str(data.get("obra", "")).strip()
             descripcion = str(data.get("descripcion", "")).strip()
 
             if not codigo:
@@ -1193,6 +1206,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                         "guia": existing.get("guia", ""),
                         "cantidad_pallet": existing.get("cantidad_pallet", 0),
                         "proveedor": existing.get("proveedor", ""),
+                        "obra": existing.get("obra", ""),
                         "fecha_registro": existing.get("fecha_registro", ""),
                     }]
                 else:
@@ -1205,6 +1219,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
             updated_in_list = False
             for idx_p, ep in enumerate(existing_pallets):
                 if ep.get("pallet", "").strip().lower() == target_pallet_name:
+                    ep_obra = obra if "obra" in data else ep.get("obra", "")
                     ep.update({
                         "pallet": pallet or ep.get("pallet", "Pallet"),
                         "ubicacion": ubicacion or ep.get("ubicacion", ""),
@@ -1213,6 +1228,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                         "guia": guia or ep.get("guia", ""),
                         "cantidad_pallet": qty_num,
                         "proveedor": proveedor or ep.get("proveedor", ""),
+                        "obra": ep_obra,
                         "fecha_edicion": datetime.now().strftime("%d/%m/%Y %H:%M"),
                     })
                     updated_in_list = True
@@ -1227,6 +1243,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                     "guia": guia or "",
                     "cantidad_pallet": qty_num,
                     "proveedor": proveedor or "",
+                    "obra": obra,
                     "fecha_edicion": datetime.now().strftime("%d/%m/%Y %H:%M"),
                 })
 
@@ -1239,6 +1256,7 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "guia": guia or existing.get("guia", ""),
                 "cantidad_pallet": qty_num,
                 "proveedor": proveedor or existing.get("proveedor", ""),
+                "obra": obra if "obra" in data else existing.get("obra", ""),
                 "fecha_registro": existing.get("fecha_registro", datetime.now().strftime("%d/%m/%Y %H:%M")),
                 "fecha_edicion": datetime.now().strftime("%d/%m/%Y %H:%M"),
             }

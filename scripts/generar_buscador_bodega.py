@@ -510,6 +510,8 @@ def consolidate_inventory(
                 if f_path and not f_path.replace("\\", "/").startswith("FOTOS/"):
                     f_path = f"FOTOS/{f_path.lstrip('/\\')}"
 
+                p_obra = p_entry.get("obra", "").strip()
+
                 item["photos"].append({
                     "pallet": p_name,
                     "ubic": p_ub,
@@ -518,10 +520,16 @@ def consolidate_inventory(
                     "guia": p_entry.get("guia", ""),
                     "cant": p_entry.get("cantidad_pallet", 0),
                     "prov": p_entry.get("proveedor", ""),
+                    "obra": p_obra,
                     "fecha": p_entry.get("fecha_registro", "")
                 })
                 if p_name or p_ub:
-                    lbl = f"{p_name} ({p_ub})" if (p_name and p_ub) else (p_name or p_ub)
+                    extra = []
+                    if p_ub:
+                        extra.append(p_ub)
+                    if p_obra:
+                        extra.append(p_obra)
+                    lbl = f"{p_name} ({', '.join(extra)})" if extra else p_name
                     lbl_parts.append(lbl)
 
             photos_with_file = [p for p in item["photos"] if p.get("file")]
@@ -1231,17 +1239,21 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         </div>
                         <div id="ocrDetectedNotice" style="display:none;" class="alert alert-success py-2 px-3 mb-2 small shadow-sm"></div>
                         <div class="row g-3">
-                            <div class="col-sm-4">
-                                <label class="form-label fw-bold text-dark small"><i class="bi bi-geo-alt me-1 text-primary"></i>Posición / Rack en Bodega:</label>
-                                <input type="text" id="camRack" class="form-control" placeholder="Ej: Rack 6B4, Piso Central">
+                            <div class="col-sm-3 col-6">
+                                <label class="form-label fw-bold text-dark small"><i class="bi bi-geo-alt me-1 text-primary"></i>Posición / Rack:</label>
+                                <input type="text" id="camRack" class="form-control" placeholder="Ej: 6B4, Piso">
                             </div>
-                            <div class="col-sm-4">
+                            <div class="col-sm-3 col-6">
                                 <label class="form-label fw-bold text-dark small"><i class="bi bi-receipt me-1 text-primary"></i>N° Guía / Factura:</label>
                                 <input type="text" id="camGuia" class="form-control" placeholder="Ej: 1808577" oninput="onGuiaInputChange(this.value)">
                             </div>
-                            <div class="col-sm-4">
-                                <label class="form-label fw-bold text-dark small"><i class="bi bi-building me-1 text-primary"></i>Proveedor:</label>
-                                <input type="text" id="camProv" class="form-control" placeholder="Ej: Sonepar, CBM, Dartel">
+                            <div class="col-sm-3 col-6">
+                                <label class="form-label fw-bold text-dark small"><i class="bi bi-truck me-1 text-primary"></i>Proveedor:</label>
+                                <input type="text" id="camProv" class="form-control" placeholder="Ej: Sonepar, CBM">
+                            </div>
+                            <div class="col-sm-3 col-6">
+                                <label class="form-label fw-bold text-dark small"><i class="bi bi-building me-1 text-primary"></i>Obra (Opcional):</label>
+                                <input type="text" id="camObra" class="form-control" placeholder="Ej: Mirador, Altos...">
                             </div>
                         </div>
                     </div>
@@ -1578,6 +1590,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                         <small class="text-muted d-block">Proveedor en Etiqueta:</small>
                                         <span class="fw-semibold text-dark" id="photoModalProv">-</span>
                                     </div>
+                                    <div class="mb-2 pb-2 border-bottom">
+                                        <small class="text-muted d-block">Obra / Proyecto de Destino:</small>
+                                        <span class="badge bg-info-subtle text-info-emphasis border fw-bold" id="photoModalObra">-</span>
+                                    </div>
                                     <div class="mb-2 pb-2 border-bottom" id="photoModalMaterialsContainer" style="display:none;">
                                         <small class="text-muted fw-bold d-block mb-1"><i class="bi bi-boxes me-1 text-primary"></i>Materiales contenidos en este Bulto:</small>
                                         <div id="photoModalMaterialsList" class="small list-group list-group-flush border rounded bg-white" style="max-height: 140px; overflow-y: auto;"></div>
@@ -1648,9 +1664,15 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             <input type="text" id="editGuia" class="form-control" placeholder="Ej: 74698">
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i>Proveedor:</label>
-                        <input type="text" id="editProv" class="form-control" placeholder="Ej: CBM">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-truck me-1 text-primary"></i>Proveedor:</label>
+                            <input type="text" id="editProv" class="form-control" placeholder="Ej: CBM">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-dark"><i class="bi bi-building me-1 text-primary"></i>Obra (Opcional):</label>
+                            <input type="text" id="editObra" class="form-control" placeholder="Ej: Mirador, Altos...">
+                        </div>
                     </div>
                     <div id="editAlert" style="display:none;" class="alert mb-0"></div>
                 </div>
@@ -2221,7 +2243,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 const pInfo = catalog[pName.toLowerCase()] || {{ name: pName, ubic: '', items: [] }};
                 const note = (READY_TO_SHIP_NOTES[pName] || '').trim();
                 text += `*${{idx + 1}}. ${{pName.toUpperCase()}}*`;
-                if (pInfo.ubic) text += ` (Rack: ${{pInfo.ubic}})`;
+                const metaExtra = [];
+                if (pInfo.ubic) metaExtra.push(`Rack: ${{pInfo.ubic}}`);
+                if (pInfo.obra) metaExtra.push(`Obra: ${{pInfo.obra}}`);
+                if (metaExtra.length) text += ` (${{metaExtra.join(' | ')}})`;
                 text += `:\\n`;
                 if (pInfo.items && pInfo.items.length) {{
                     pInfo.items.forEach(it => {{
@@ -2272,13 +2297,14 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     bultosHtml += `
                         <div class="card border rounded-3 shadow-sm">
                             <div class="card-header bg-white d-flex align-items-center justify-content-between p-2">
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <span class="badge" style="background:#586F86; color:#ffffff; font-size:0.9rem;">
                                         <i class="bi bi-qr-code me-1"></i>${{pName}}
                                     </span>
                                     <span class="badge bg-light text-dark border">
                                         <i class="bi bi-geo-alt-fill text-danger me-1"></i>${{pInfo.ubic || 'Sin rack'}}
                                     </span>
+                                    ${{pInfo.obra ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="bi bi-building me-1"></i>${{escapeHtml(pInfo.obra)}}</span>` : ''}}
                                     <span class="badge bg-secondary-subtle text-secondary border">
                                         ${{matCount}} material${{matCount === 1 ? '' : 'es'}}
                                     </span>
@@ -2563,6 +2589,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                 file: ph.file || '',
                                 guia: ph.guia || '',
                                 prov: ph.prov || '',
+                                obra: ph.obra || '',
                                 items: []
                             }};
                         }}
@@ -2570,6 +2597,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         if (!map[k].ubic && ph.ubic) map[k].ubic = ph.ubic;
                         if (!map[k].guia && ph.guia) map[k].guia = ph.guia;
                         if (!map[k].prov && ph.prov) map[k].prov = ph.prov;
+                        if (!map[k].obra && ph.obra) map[k].obra = ph.obra;
 
                         if (!map[k].items.some(x => x.c === it.c)) {{
                             map[k].items.push({{
@@ -2725,6 +2753,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             document.getElementById('photoModalStock').textContent = `${{fmtNum(it.sd)}} ${{it.u}} (Bod. 56: ${{fmtNum(it.d56)}} | Bod. 121: ${{fmtNum(it.d121)}})`;
             document.getElementById('photoModalGuia').textContent = ph.guia ? `Guía / Doc N° ${{ph.guia}}` : '-';
             document.getElementById('photoModalProv').textContent = ph.prov || '-';
+            const modalObraEl = document.getElementById('photoModalObra');
+            if (modalObraEl) {{
+                modalObraEl.textContent = ph.obra || 'No especificada (General)';
+            }}
 
             const linkEl = document.getElementById('photoModalLink');
             if (ph.file) {{
@@ -3471,6 +3503,8 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             if (g) g.value = '';
             const p = document.getElementById('camProv');
             if (p) p.value = '';
+            const o = document.getElementById('camObra');
+            if (o) o.value = '';
 
             const ocrInd = document.getElementById('ocrScanIndicator');
             if (ocrInd) ocrInd.style.display = 'none';
@@ -3660,6 +3694,14 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 const provEl = document.getElementById('camProv');
                 if (provEl) provEl.value = pVal;
                 detected.push(`<strong>Proveedor:</strong> ${{pVal}}`);
+            }}
+
+            // 4. Obra / Proyecto
+            if (res.obra && String(res.obra).trim()) {{
+                const oVal = String(res.obra).trim();
+                const obraEl = document.getElementById('camObra');
+                if (obraEl && !obraEl.value) obraEl.value = oVal;
+                detected.push(`<strong>Obra:</strong> ${{oVal}}`);
             }}
 
             // Feedback visual al usuario
@@ -4024,6 +4066,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const rackVal = document.getElementById('camRack').value.trim();
             const guiaVal = document.getElementById('camGuia').value.trim();
             const provVal = document.getElementById('camProv').value.trim();
+            const obraVal = document.getElementById('camObra') ? document.getElementById('camObra').value.trim() : '';
             const alertBox = document.getElementById('camAlert');
 
             const payload = {{
@@ -4032,6 +4075,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 ubicacion: rackVal,
                 guia: guiaVal,
                 proveedor: provVal,
+                obra: obraVal,
                 foto_base64: currentCapturedBase64
             }};
 
@@ -4830,6 +4874,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     if (data.ubicacion) document.getElementById('camRack').value = data.ubicacion;
                     if (data.guia) document.getElementById('camGuia').value = data.guia;
                     if (data.proveedor) document.getElementById('camProv').value = data.proveedor;
+                    if (document.getElementById('camObra')) document.getElementById('camObra').value = data.obra || '';
 
                     window.palletMaterialsList = [];
                     for (const m of data.materiales) {{
@@ -4889,6 +4934,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             let foto = '';
             let guia = '';
             let prov = '';
+            let obra = '';
 
             INVENTORY_DATA.forEach(it => {{
                 const photos = (it.photos && it.photos.length) ? it.photos : (it.photo ? [it.photo] : []);
@@ -4899,6 +4945,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         if (!foto && ph.file) foto = ph.file;
                         if (!guia && ph.guia) guia = ph.guia;
                         if (!prov && ph.prov) prov = ph.prov;
+                        if (!obra && ph.obra) obra = ph.obra;
                     }}
                 }});
             }});
@@ -4907,6 +4954,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 if (rack) document.getElementById('camRack').value = rack;
                 if (guia) document.getElementById('camGuia').value = guia;
                 if (prov) document.getElementById('camProv').value = prov;
+                if (document.getElementById('camObra')) document.getElementById('camObra').value = obra || '';
 
                 window.palletMaterialsList = [];
                 matchingItems.forEach(({{ it, ph }}) => {{
@@ -4962,6 +5010,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const rackVal = document.getElementById('camRack').value.trim();
             const guiaVal = document.getElementById('camGuia').value.trim();
             const provVal = document.getElementById('camProv').value.trim();
+            const obraVal = document.getElementById('camObra') ? document.getElementById('camObra').value.trim() : '';
 
             const btn = document.getElementById('btnSavePalletNoPhoto');
             const origHtml = btn ? btn.innerHTML : '';
@@ -4977,6 +5026,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 cantidad_pallet: window.palletMaterialsList[0].cantidad,
                 guia: guiaVal,
                 proveedor: provVal,
+                obra: obraVal,
                 descripcion: window.palletMaterialsList[0].descripcion,
                 foto_base64: currentCapturedBase64 || "",
                 materiales: window.palletMaterialsList
@@ -5006,6 +5056,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             existingP.cant = itm.cantidad;
                             existingP.guia = guiaVal;
                             existingP.prov = provVal;
+                            existingP.obra = obraVal;
                             if (resData.foto_url) existingP.file = resData.foto_url;
                         }} else {{
                             existingP = {{
@@ -5015,13 +5066,14 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                 cant: itm.cantidad,
                                 guia: guiaVal,
                                 prov: provVal,
+                                obra: obraVal,
                                 desc: matObj.d
                             }};
                             matObj.photos.push(existingP);
                         }}
                         matObj.photo = matObj.photos[0];
-                        matObj.pallet_lbl = matObj.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
-                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+                        matObj.pallet_lbl = matObj.photos.map(p => p.obra ? `${{p.pallet}} (${{p.ubic ? p.ubic + ', ' : ''}}${{p.obra}})` : `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}} ${{obraVal}}`;
                     }}
                 }}
 
@@ -5058,6 +5110,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         cantidad_pallet: itm.cantidad,
                         guia: guiaVal,
                         proveedor: provVal,
+                        obra: obraVal,
                         descripcion: itm.descripcion,
                         foto_base64: currentCapturedBase64 || "",
                         timestamp: new Date().toISOString()
@@ -5073,6 +5126,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             existingP.cant = itm.cantidad;
                             existingP.guia = guiaVal;
                             existingP.prov = provVal;
+                            existingP.obra = obraVal;
                         }} else {{
                             matObj.photos.push({{
                                 pallet: palletVal,
@@ -5081,12 +5135,13 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                 cant: itm.cantidad,
                                 guia: guiaVal,
                                 prov: provVal,
+                                obra: obraVal,
                                 desc: matObj.d
                             }});
                         }}
                         matObj.photo = matObj.photos[0];
-                        matObj.pallet_lbl = matObj.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
-                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+                        matObj.pallet_lbl = matObj.photos.map(p => p.obra ? `${{p.pallet}} (${{p.ubic ? p.ubic + ', ' : ''}}${{p.obra}})` : `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}} ${{obraVal}}`;
                     }}
                 }}
 
@@ -5214,6 +5269,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const rackVal = document.getElementById('camRack').value.trim();
             const guiaVal = document.getElementById('camGuia').value.trim();
             const provVal = document.getElementById('camProv').value.trim();
+            const obraVal = document.getElementById('camObra') ? document.getElementById('camObra').value.trim() : '';
 
             const btn = document.getElementById('btnSubmitPallet');
             const btnText = document.getElementById('submitBtnText');
@@ -5227,6 +5283,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 cantidad_pallet: window.palletMaterialsList[0].cantidad,
                 guia: guiaVal,
                 proveedor: provVal,
+                obra: obraVal,
                 descripcion: window.palletMaterialsList[0].descripcion,
                 foto_base64: currentCapturedBase64,
                 materiales: window.palletMaterialsList
@@ -5257,6 +5314,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             existingP.cant = itm.cantidad;
                             existingP.guia = guiaVal;
                             existingP.prov = provVal;
+                            existingP.obra = obraVal;
                             existingP.file = resData.foto_url || `FOTOS/${{resData.filename}}`;
                         }} else {{
                             matObj.photos.push({{
@@ -5266,12 +5324,13 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                 cant: itm.cantidad,
                                 guia: guiaVal,
                                 prov: provVal,
+                                obra: obraVal,
                                 desc: matObj.d
                             }});
                         }}
                         matObj.photo = matObj.photos[0];
-                        matObj.pallet_lbl = matObj.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
-                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+                        matObj.pallet_lbl = matObj.photos.map(p => p.obra ? `${{p.pallet}} (${{p.ubic ? p.ubic + ', ' : ''}}${{p.obra}})` : `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}} ${{obraVal}}`;
                     }}
                 }}
 
@@ -5311,6 +5370,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         cantidad_pallet: itm.cantidad,
                         guia: guiaVal,
                         proveedor: provVal,
+                        obra: obraVal,
                         descripcion: itm.descripcion,
                         foto_base64: currentCapturedBase64
                     }};
@@ -5324,10 +5384,11 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             cant: itm.cantidad,
                             guia: guiaVal,
                             prov: provVal,
+                            obra: obraVal,
                             desc: matObj.d
                         }};
-                        matObj.pallet_lbl = `${{palletVal}} (${{rackVal}})`.trim();
-                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+                        matObj.pallet_lbl = (obraVal ? `${{palletVal}} (${{rackVal ? rackVal + ', ' : ''}}${{obraVal}})` : `${{palletVal}} (${{rackVal}})`).trim();
+                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}} ${{obraVal}}`;
                     }}
                 }}
 
@@ -5366,6 +5427,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 cantidad_pallet: payload.cantidad_pallet,
                 guia: payload.guia,
                 proveedor: payload.proveedor,
+                obra: payload.obra || '',
                 descripcion: payload.descripcion,
                 foto_base64: payload.foto_base64,
                 timestamp: new Date().toISOString()
@@ -5405,6 +5467,8 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             document.getElementById('editUnitBadge').textContent = it.u || 'UN';
             document.getElementById('editGuia').value = ph.guia || '';
             document.getElementById('editProv').value = ph.prov || '';
+            const editObraEl = document.getElementById('editObra');
+            if (editObraEl) editObraEl.value = ph.obra || '';
 
             const subEl = document.getElementById('editModalSub');
             if (subEl) {{
@@ -5518,6 +5582,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const qtyVal = Number(document.getElementById('editQty').value) || 0;
             const guiaVal = document.getElementById('editGuia').value.trim();
             const provVal = document.getElementById('editProv').value.trim();
+            const obraVal = document.getElementById('editObra') ? document.getElementById('editObra').value.trim() : '';
 
             const btn = document.getElementById('btnSavePalletEdit');
             const origText = btn.innerHTML;
@@ -5533,15 +5598,16 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             targetP.cant = qtyVal;
             targetP.guia = guiaVal;
             targetP.prov = provVal;
+            targetP.obra = obraVal;
 
             if (it.photos.length > 0) {{
                 it.photo = it.photos[0];
-                it.pallet_lbl = it.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                it.pallet_lbl = it.photos.map(p => p.obra ? `${{p.pallet}} (${{p.ubic ? p.ubic + ', ' : ''}}${{p.obra}})` : `${{p.pallet}} (${{p.ubic}})`).join(' | ');
             }} else {{
                 it.photo = targetP;
-                it.pallet_lbl = `${{palletVal}} (${{rackVal}})`.trim();
+                it.pallet_lbl = (obraVal ? `${{palletVal}} (${{rackVal ? rackVal + ', ' : ''}}${{obraVal}})` : `${{palletVal}} (${{rackVal}})`).trim();
             }}
-            it.g_str = (it.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+            it.g_str = (it.g_str || '') + ` ${{palletVal}} ${{rackVal}} ${{obraVal}}`;
 
             const payload = {{
                 codigo: code,
@@ -5552,6 +5618,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 cantidad_pallet: qtyVal,
                 guia: guiaVal,
                 proveedor: provVal,
+                obra: obraVal,
                 descripcion: it.d,
                 foto: targetP.file
             }};
@@ -5677,6 +5744,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                 file: ph.file || '',
                                 guia: ph.guia || '',
                                 prov: ph.prov || '',
+                                obra: ph.obra || '',
                                 items: []
                             }};
                         }}
@@ -5684,6 +5752,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         if (!palletsMap[pName].ubic && ph.ubic) palletsMap[pName].ubic = ph.ubic;
                         if (!palletsMap[pName].guia && ph.guia) palletsMap[pName].guia = ph.guia;
                         if (!palletsMap[pName].prov && ph.prov) palletsMap[pName].prov = ph.prov;
+                        if (!palletsMap[pName].obra && ph.obra) palletsMap[pName].obra = ph.obra;
 
                         palletsMap[pName].items.push({{ it, ph, pIdx }});
                     }}
@@ -5729,8 +5798,9 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     p.ubic,
                     p.guia,
                     p.prov,
+                    p.obra,
                     palletNote,
-                    ...p.items.map(m => `${{m.it.c}} ${{m.it.d}} ${{m.ph.guia}} ${{m.ph.prov}}`)
+                    ...p.items.map(m => `${{m.it.c}} ${{m.it.d}} ${{m.ph.guia}} ${{m.ph.prov}} ${{m.ph.obra || ''}}`)
                 ].join(' ').toUpperCase();
 
                 return `
@@ -5740,13 +5810,14 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         <!-- Encabezado del Bulto -->
                         <div class="card-header border-bottom p-3" style="${{isPalletReady ? 'background: #E8F5E9 !important;' : 'background: #ffffff;'}}">
                             <div class="d-flex align-items-center justify-content-between gap-2">
-                                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                <div class="d-flex align-items-center gap-2 flex-wrap overflow-hidden">
                                     <span class="badge" style="background:#586F86; color:#ffffff; font-size:1rem; padding: 6px 10px;">
                                         <i class="bi bi-box-seam-fill me-1 text-warning"></i>${{escapeHtml(p.name)}}
                                     </span>
                                     <span class="badge bg-light text-dark border" title="Ubicación / Rack">
                                         <i class="bi bi-geo-alt-fill text-danger me-1"></i>${{escapeHtml(p.ubic || 'Sin rack')}}
                                     </span>
+                                    ${{p.obra ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle fw-bold" title="Obra o Proyecto de destino"><i class="bi bi-building me-1"></i>${{escapeHtml(p.obra)}}</span>` : ''}}
                                 </div>
                                 <div class="d-flex align-items-center gap-1">
                                     <button type="button" class="btn btn-sm ${{isPalletReady ? 'btn-success text-white shadow' : 'btn-outline-secondary bg-light'}} py-1 px-3 fw-bold d-flex align-items-center gap-1"
@@ -5826,7 +5897,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                                 <span class="badge bg-success text-white" style="font-size:0.75rem;">${{fmtNum(m.ph.cant)}} ${{escapeHtml(m.it.u)}}</span>
                                             </div>
                                             <div class="small text-dark text-truncate" title="${{escapeHtml(m.it.d)}}">${{escapeHtml(m.it.d)}}</div>
-                                            ${{m.ph.guia ? `<small class="text-secondary d-block" style="font-size:0.7rem;">Doc: ${{escapeHtml(m.ph.guia)}} ${{m.ph.prov ? '| Prov: ' + escapeHtml(m.ph.prov) : ''}}</small>` : ''}}
+                                            ${{(m.ph.guia || m.ph.prov || m.ph.obra) ? `<small class="text-secondary d-block" style="font-size:0.7rem;">${{[m.ph.guia ? 'Doc: ' + escapeHtml(m.ph.guia) : '', m.ph.prov ? 'Prov: ' + escapeHtml(m.ph.prov) : '', m.ph.obra ? 'Obra: ' + escapeHtml(m.ph.obra) : ''].filter(Boolean).join(' | ')}}</small>` : ''}}
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0 align-items-center">
                                             <button type="button" class="btn btn-outline-warning btn-sm p-1" title="Editar este material" onclick="openEditPalletModal('${{escapeHtml(m.it.c)}}', ${{m.pIdx}})">
@@ -5905,6 +5976,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         existing.cant = p.cantidad_pallet || existing.cant;
                         existing.guia = p.guia || existing.guia;
                         existing.prov = p.proveedor || existing.prov;
+                        existing.obra = p.obra || existing.obra;
                         if (p.foto_base64) existing.file = p.foto_base64;
                     }} else {{
                         it.photos.push({{
@@ -5914,12 +5986,13 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                             cant: p.cantidad_pallet || 0,
                             guia: p.guia || '',
                             prov: p.proveedor || '',
+                            obra: p.obra || '',
                             desc: it.d
                         }});
                     }}
                     it.photo = it.photos[0];
-                    it.pallet_lbl = it.photos.map(x => `${{x.pallet}} (${{x.ubic}})`).join(' | ');
-                    it.g_str = (it.g_str || '') + ` ${{p.pallet}} ${{p.ubicacion || ''}}`;
+                    it.pallet_lbl = it.photos.map(x => x.obra ? `${{x.pallet}} (${{x.ubic ? x.ubic + ', ' : ''}}${{x.obra}})` : `${{x.pallet}} (${{x.ubic}})`).join(' | ');
+                    it.g_str = (it.g_str || '') + ` ${{p.pallet}} ${{p.ubicacion || ''}} ${{p.obra || ''}}`;
                 }}
             }}
         }}
@@ -5942,11 +6015,12 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                                     cant: p.cantidad_pallet,
                                     guia: p.guia,
                                     prov: p.proveedor,
+                                    obra: p.obra || '',
                                     desc: p.descripcion || it.d
                                 }}));
                                 it.photo = it.photos[0];
-                                it.pallet_lbl = it.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
-                                it.g_str = (it.g_str || '') + ' ' + it.photos.map(p => `${{p.pallet}} ${{p.ubic}}`).join(' ');
+                                it.pallet_lbl = it.photos.map(p => p.obra ? `${{p.pallet}} (${{p.ubic ? p.ubic + ', ' : ''}}${{p.obra}})` : `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                                it.g_str = (it.g_str || '') + ' ' + it.photos.map(p => `${{p.pallet}} ${{p.ubic}} ${{p.obra || ''}}`).join(' ');
                             }} else {{
                                 it.photos = [];
                                 it.photo = null;
@@ -6117,6 +6191,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             const qEl = document.getElementById('camQty'); if (qEl) qEl.value = '';
             const rEl = document.getElementById('camRack'); if (rEl) rEl.value = '';
             const pEl = document.getElementById('camProv'); if (pEl) pEl.value = '';
+            const oEl = document.getElementById('camObra'); if (oEl) oEl.value = '';
             initCameraTab();
             renderRegisteredPalletsGrid();
         }}
