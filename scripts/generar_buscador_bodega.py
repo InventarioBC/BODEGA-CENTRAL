@@ -4734,6 +4734,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 statusBanner.style.display = 'block';
             }}
 
+            try {{
                 const detailUrl = getApiUrl(`/api/pallet_detail?pallet=${{encodeURIComponent(cleanName)}}`);
                 const resp = await fetch(detailUrl);
                 const data = await resp.json();
@@ -5308,6 +5309,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 return;
             }}
 
+            try {{
                 const delUrl = getApiUrl('/api/delete_pallet');
 
                 await fetch(delUrl, {{
@@ -5839,6 +5841,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
             showToast('⏳ Sincronizando inventario con el computador...');
 
+            try {{
                 const syncUrl = getApiUrl('/api/sync_inventory?t=' + Date.now());
 
                 const resp = await fetch(syncUrl, {{ method: 'GET' }});
@@ -5985,7 +5988,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 if ('caches' in window) {{
                     caches.keys().then(keys => {{
                         keys.forEach(k => {{
-                            if (k !== 'bodega-central-v29') caches.delete(k);
+                            if (k !== 'bodega-central-v37') caches.delete(k);
                         }});
                     }});
                 }}
