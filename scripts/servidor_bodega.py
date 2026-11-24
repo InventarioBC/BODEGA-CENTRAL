@@ -286,6 +286,7 @@ LAST_SERVER_UPDATE = time.time()
 
 def rebuild_inventory_async():
     global LAST_SERVER_UPDATE
+    LAST_SERVER_UPDATE = time.time()
 
     def _worker():
         global LAST_SERVER_UPDATE
@@ -599,7 +600,8 @@ class BodegaHTTPRequestHandler(SimpleHTTPRequestHandler):
                     "total_items": len(consolidated),
                     "items": consolidated,
                     "pallets": photo_map,
-                    "server_time": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    "server_time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                    "last_updated": LAST_SERVER_UPDATE
                 })
                 print(f"[OK] Sincronización ultrarrápida enviada al cliente: {len(consolidated)} materiales, {len(photo_map)} pallets")
             except Exception as e:

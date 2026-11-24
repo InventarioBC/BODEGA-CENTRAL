@@ -4879,6 +4879,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
         // Guardar Contenido del Pallet (Sin Foto Obligatoria)
         async function savePalletMaterialsOnly() {{
+            markLocalChangeMade();
             const alertBox = document.getElementById('cameraUploadAlert');
             alertBox.style.display = 'none';
 
@@ -5292,6 +5293,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
         }}
 
         function savePalletLocally(code, payload) {{
+            markLocalChangeMade();
             const store = getLocalPalletsStore();
             store[code] = {{
                 codigo: code,
@@ -5391,6 +5393,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             }}
 
             try {{
+                markLocalChangeMade();
                 const delUrl = getApiUrl('/api/delete_pallet');
 
                 await fetch(delUrl, {{
@@ -5897,7 +5900,8 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
         }}
 
         // Sistema de Detección de Actualizaciones en Tiempo Real
-        const APP_PAGE_LOAD_TS = Date.now();
+        let LAST_KNOWN_SERVER_TS = null;
+        let LATEST_CHECKED_SERVER_TS = null;
         let updateNoticeActive = false;
 
         async function checkForUpdates() {{
@@ -5906,12 +5910,33 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.last_updated) {{
-                    const serverUpdateMs = data.last_updated * 1000;
-                    if (serverUpdateMs > APP_PAGE_LOAD_TS + 5000) {{
+                    LATEST_CHECKED_SERVER_TS = data.last_updated;
+                    if (LAST_KNOWN_SERVER_TS === null) {{
+                        // Al abrir la app, establecer el timestamp del servidor como base inicial sin alertar
+                        LAST_KNOWN_SERVER_TS = data.last_updated;
+                        return;
+                    }}
+                    // Alertar solo si el servidor tiene una actualización posterior a cuando abrimos o sincronizamos
+                    if (data.last_updated > LAST_KNOWN_SERVER_TS + 2) {{
                         showUpdateBanner();
                     }}
                 }}
             }} catch(e) {{}}
+        }}
+
+        function dismissUpdateBanner() {{
+            updateNoticeActive = false;
+            const b = document.getElementById('updateNoticeBanner');
+            if (b) b.style.display = 'none';
+            if (LATEST_CHECKED_SERVER_TS) {{
+                LAST_KNOWN_SERVER_TS = LATEST_CHECKED_SERVER_TS;
+            }}
+        }}
+
+        function markLocalChangeMade() {{
+            // Avanzar el timestamp conocido para evitar que cambios locales propios activen la alerta
+            const nowSec = Date.now() / 1000;
+            LAST_KNOWN_SERVER_TS = Math.max(LAST_KNOWN_SERVER_TS || 0, nowSec + 15);
         }}
 
         function showUpdateBanner() {{
@@ -5924,10 +5949,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     <span><strong>¡Nueva actualización disponible!</strong> Se han registrado cambios en el inventario o pallets.</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="syncAndUpdateInventory(); document.getElementById('updateNoticeBanner').style.display='none';">
+                    <button type="button" class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="dismissUpdateBanner(); syncAndUpdateInventory();">
                         <i class="bi bi-arrow-repeat me-1"></i>Actualizar Ahora
                     </button>
-                    <button type="button" class="btn-close btn-close-white btn-sm" onclick="document.getElementById('updateNoticeBanner').style.display='none'" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white btn-sm" onclick="dismissUpdateBanner()" aria-label="Cerrar"></button>
                 </div>
             `;
             b.style.display = 'flex';
@@ -6004,6 +6029,14 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 updateReadyToShipBadges();
 
                 showToast(`✅ ¡Inventario y Pallets 100% actualizados! (${{data.total_items}} materiales)`);
+                if (data.last_updated) {{
+                    LAST_KNOWN_SERVER_TS = data.last_updated;
+                }} else if (LATEST_CHECKED_SERVER_TS) {{
+                    LAST_KNOWN_SERVER_TS = LATEST_CHECKED_SERVER_TS;
+                }} else {{
+                    LAST_KNOWN_SERVER_TS = Date.now() / 1000;
+                }}
+                dismissUpdateBanner();
             }} catch(err) {{
                 console.error('Error al sincronizar:', err);
                 showToast('⚠️ No conectado al computador. Datos locales intactos.');
