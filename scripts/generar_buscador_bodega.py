@@ -1012,7 +1012,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
     </style>
 </head>
 <body class="p-2 p-md-4">
-    <div id="updateNoticeBanner" class="update-notice-banner" style="display:none;"></div>
+    <!-- Aviso flotante de actualización eliminado -->
     <div class="container-fluid" style="max-width: 1520px;">
         <!-- Header -->
         <div class="header-box d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -1537,8 +1537,16 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     <div id="photoModalTabs" class="d-flex flex-wrap gap-2 mb-3 p-2 bg-white rounded border shadow-sm" style="display:none;"></div>
                     <div class="row g-3">
                         <div class="col-md-7 text-center">
-                            <div class="bg-dark rounded p-2 d-flex align-items-center justify-content-center" style="min-height: 380px;">
+                            <div class="bg-dark rounded p-2 d-flex align-items-center justify-content-center position-relative overflow-hidden" style="min-height: 380px;">
                                 <img id="photoModalImg" src="" alt="Foto Pallet" class="img-fluid rounded" style="max-height: 520px; object-fit: contain; cursor: zoom-in;" onclick="window.open(this.src, '_blank')" title="Clic para abrir imagen en tamaño completo">
+                                <div id="photoModalFallbackBox" class="position-absolute top-0 start-0 w-100 h-100 d-none flex-column align-items-center justify-content-center bg-white rounded p-4 text-center">
+                                    <i class="bi bi-image text-secondary display-4 d-block mb-2 opacity-50"></i>
+                                    <h6 class="fw-bold text-dark mb-1">Fotografía del Bulto</h6>
+                                    <p class="small text-muted mb-3" id="photoModalFallbackMsg">La foto se está sincronizando con la nube o el servidor local.</p>
+                                    <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm" onclick="retryPhotoModalLoad()">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Reintentar Carga
+                                    </button>
+                                </div>
                             </div>
                             <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Haz clic en la foto para abrirla en tamaño original</small>
                         </div>
@@ -2666,12 +2674,48 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             }}
 
             const imgEl = document.getElementById('photoModalImg');
+            const fbBox = document.getElementById('photoModalFallbackBox');
+            if (fbBox) {{
+                fbBox.classList.add('d-none');
+                fbBox.classList.remove('d-flex');
+            }}
+
             if (ph.file) {{
+                imgEl.dataset.originalFile = ph.file;
+                imgEl.dataset.fallbackTried = 'false';
+                imgEl.onload = function() {{
+                    this.style.display = 'block';
+                    if (fbBox) {{
+                        fbBox.classList.add('d-none');
+                        fbBox.classList.remove('d-flex');
+                    }}
+                }};
+                imgEl.onerror = function() {{
+                    if (this.dataset.fallbackTried !== 'true' && BACKEND_TUNNEL_URL) {{
+                        this.dataset.fallbackTried = 'true';
+                        console.log('[FOTO] Intentando cargar foto desde túnel backend:', getApiUrl(ph.file));
+                        this.src = getApiUrl(ph.file);
+                        return;
+                    }}
+                    this.style.display = 'none';
+                    if (fbBox) {{
+                        fbBox.classList.remove('d-none');
+                        fbBox.classList.add('d-flex');
+                        const msgEl = document.getElementById('photoModalFallbackMsg');
+                        if (msgEl) msgEl.textContent = 'La imagen se está sincronizando con la nube. Si tienes el servidor encendido, pulsa Reintentar.';
+                    }}
+                }};
                 imgEl.src = encodeURI(ph.file);
                 imgEl.style.display = 'block';
             }} else {{
                 imgEl.src = '';
                 imgEl.style.display = 'none';
+                if (fbBox) {{
+                    fbBox.classList.remove('d-none');
+                    fbBox.classList.add('d-flex');
+                    const msgEl = document.getElementById('photoModalFallbackMsg');
+                    if (msgEl) msgEl.textContent = 'Este bulto no tiene fotografía registrada.';
+                }}
             }}
             imgEl.alt = `${{ph.pallet}} - ${{it.d}}`;
 
@@ -2716,6 +2760,26 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
 
             const modal = new bootstrap.Modal(document.getElementById('photoModal'));
             modal.show();
+        }}
+
+        function retryPhotoModalLoad() {{
+            const imgEl = document.getElementById('photoModalImg');
+            if (imgEl && imgEl.dataset.originalFile) {{
+                imgEl.dataset.fallbackTried = 'true';
+                imgEl.src = getApiUrl(imgEl.dataset.originalFile) + '?t=' + Date.now();
+                imgEl.style.display = 'block';
+            }}
+        }}
+
+        function handleImgFallback(img, originalPath) {{
+            if (!img) return;
+            const cleanPath = originalPath || img.getAttribute('data-raw-path') || '';
+            if (!img.dataset.fallbackTried && BACKEND_TUNNEL_URL && cleanPath) {{
+                img.dataset.fallbackTried = 'true';
+                img.src = getApiUrl(cleanPath);
+                return;
+            }}
+            img.style.display = 'none';
         }}
 
         function renderBatch() {{
@@ -5699,7 +5763,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                         <!-- FOTO DEL BULTO (PROMINENTE CON CLIC PARA VER EN GRANDE) -->
                         ${{hasPhoto ? `
                             <div class="position-relative bg-dark text-center overflow-hidden cursor-pointer" style="height: 190px;" onclick="openPalletPhotoViewer('${{escapeHtml(p.name)}}')" title="Toca para ver la foto en tamaño completo">
-                                <img src="${{encodeURI(p.file)}}" alt="${{escapeHtml(p.name)}}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" loading="lazy">
+                                <img src="${{encodeURI(p.file)}}" alt="${{escapeHtml(p.name)}}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" loading="lazy" onerror="handleImgFallback(this, '${{encodeURI(p.file)}}')">
                                 <div class="position-absolute bottom-0 start-0 end-0 p-2 d-flex justify-content-between align-items-center" style="background: linear-gradient(transparent, rgba(0,0,0,0.75));">
                                     <span class="badge bg-dark bg-opacity-75 text-white"><i class="bi bi-zoom-in me-1"></i>Ver Foto</span>
                                     ${{p.guia ? `<span class="badge bg-secondary bg-opacity-75 text-white"><i class="bi bi-receipt me-1"></i>Doc: ${{escapeHtml(p.guia)}}</span>` : ''}}
@@ -5899,64 +5963,12 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             }}
         }}
 
-        // Sistema de Detección de Actualizaciones en Tiempo Real
-        let LAST_KNOWN_SERVER_TS = null;
-        let LATEST_CHECKED_SERVER_TS = null;
+        // Notificaciones automáticas de actualización desactivadas (el usuario actualiza manualmente cuando lo desea)
         let updateNoticeActive = false;
-
-        async function checkForUpdates() {{
-            try {{
-                const res = await fetch(getApiUrl('/api/status?t=' + Date.now()), {{ cache: 'no-store' }});
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data.last_updated) {{
-                    LATEST_CHECKED_SERVER_TS = data.last_updated;
-                    if (LAST_KNOWN_SERVER_TS === null) {{
-                        // Al abrir la app, establecer el timestamp del servidor como base inicial sin alertar
-                        LAST_KNOWN_SERVER_TS = data.last_updated;
-                        return;
-                    }}
-                    // Alertar solo si el servidor tiene una actualización posterior a cuando abrimos o sincronizamos
-                    if (data.last_updated > LAST_KNOWN_SERVER_TS + 2) {{
-                        showUpdateBanner();
-                    }}
-                }}
-            }} catch(e) {{}}
-        }}
-
-        function dismissUpdateBanner() {{
-            updateNoticeActive = false;
-            const b = document.getElementById('updateNoticeBanner');
-            if (b) b.style.display = 'none';
-            if (LATEST_CHECKED_SERVER_TS) {{
-                LAST_KNOWN_SERVER_TS = LATEST_CHECKED_SERVER_TS;
-            }}
-        }}
-
-        function markLocalChangeMade() {{
-            // Avanzar el timestamp conocido para evitar que cambios locales propios activen la alerta
-            const nowSec = Date.now() / 1000;
-            LAST_KNOWN_SERVER_TS = Math.max(LAST_KNOWN_SERVER_TS || 0, nowSec + 15);
-        }}
-
-        function showUpdateBanner() {{
-            updateNoticeActive = true;
-            const b = document.getElementById('updateNoticeBanner');
-            if (!b) return;
-            b.innerHTML = `
-                <div class="d-flex align-items-center gap-2">
-                    <span class="spinner-grow spinner-grow-sm text-warning" role="status"></span>
-                    <span><strong>¡Nueva actualización disponible!</strong> Se han registrado cambios en el inventario o pallets.</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="dismissUpdateBanner(); syncAndUpdateInventory();">
-                        <i class="bi bi-arrow-repeat me-1"></i>Actualizar Ahora
-                    </button>
-                    <button type="button" class="btn-close btn-close-white btn-sm" onclick="dismissUpdateBanner()" aria-label="Cerrar"></button>
-                </div>
-            `;
-            b.style.display = 'flex';
-        }}
+        function checkForUpdates() {{}}
+        function showUpdateBanner() {{}}
+        function dismissUpdateBanner() {{}}
+        function markLocalChangeMade() {{}}
 
         let isSyncingInventory = false;
         async function syncAndUpdateInventory(triggerBtn) {{
@@ -6191,20 +6203,7 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 }});
             }}
 
-            // Auto-actualización al abrir la app o regresar de otra pantalla
-            setTimeout(checkForUpdates, 1500);
-            setInterval(checkForUpdates, 30000);
-
-            document.addEventListener('visibilitychange', () => {{
-                if (document.visibilityState === 'visible') {{
-                    console.log('[APP] App abierta o activa, verificando cambios en servidor...');
-                    checkForUpdates();
-                }}
-            }});
-
-            window.addEventListener('focus', () => {{
-                checkForUpdates();
-            }});
+            // Modo silencioso: la actualización solo se ejecuta cuando el usuario presiona el botón 'Actualizar' manualmente
         }}
 
         if (document.readyState === 'loading') {{

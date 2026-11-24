@@ -295,6 +295,12 @@ def rebuild_inventory_async():
             importlib.reload(gen)
             gen.build_all()
             LAST_SERVER_UPDATE = time.time()
+            try:
+                auto_push_script = Path(r"C:\Bodega\scripts\git_auto_push.py")
+                if auto_push_script.exists():
+                    subprocess.run([sys.executable, str(auto_push_script), "Auto: Sincronizar nuevo pallet / foto"], capture_output=True, timeout=60)
+            except Exception as e_push:
+                print(f"[WARN] Error al auto-push de pallet a GitHub: {e_push}")
         except Exception as e_reb:
             print(f"[WARN] Error al regenerar buscador en background: {e_reb}")
     threading.Thread(target=_worker, daemon=True).start()
