@@ -108,7 +108,8 @@
         "cantidad_pallet": 15000.0,
         "proveedor": "CBM",
         "fecha_registro": "24/11/2026 12:19",
-        "fecha_edicion": "24/11/2026 12:25"
+        "fecha_edicion": "24/11/2026 17:54",
+        "obra": "AMAPOLA"
       }
     ],
     "pallet": "Bulto 3",
@@ -118,8 +119,9 @@
     "guia": "75654",
     "cantidad_pallet": 15000.0,
     "proveedor": "CBM",
+    "obra": "AMAPOLA",
     "fecha_registro": "24/11/2026 12:19",
-    "fecha_edicion": "24/11/2026 12:25"
+    "fecha_edicion": "24/11/2026 17:54"
   },
   "1UA0168": {
     "pallets": [
