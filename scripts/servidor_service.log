@@ -71,3 +71,28 @@
 ====================================================================
 
 127.0.0.1 - - [20/Nov/2026 12:39:30] "GET /api/status HTTP/1.1" 200 -
+
+
+=== INICIO DE SERVICIO 2026-11-24 09:24:31 ===
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+[OK] cloudflared iniciado con PID: 584
+====================================================================[OK] Servidor escuchando también en puerto 80 estándar (http://192.168.1.18/)
+
+  SERVIDOR BODEGA CENTRAL — DEPTO. ELÉCTRICO GUZMÁN Y LARRAÍN
+====================================================================
+  Acceso Local PC:       http://localhost:8080/
+  Acceso Wi-Fi Bodega:   http://192.168.1.18:8080/
+  Conectando túnel HTTPS para acceso celular...
+====================================================================
+  Presiona Ctrl+C para detener el servidor.
+====================================================================
+[OK] Archivos lanzadores móviles actualizados: G:\Unidades compartidas\Departamento Eléctrico\COMPRAS DEPTO ELECTRICO\MATERIAL BODEGA CENTRAL\Abrir_en_Celular.html
+
+====================================================================
+  ¡TÚNEL SEGURO HTTPS CLOUDFLARE CONECTADO EXITOSAMENTE!
+====================================================================
+  Acceso Celular (5G / 4G):  https://feeds-superintendent-boundary-nation.trycloudflare.com
+  Acceso Wi-Fi Bodega:       http://192.168.1.18:8080/
+====================================================================
+
+127.0.0.1 - - [24/Nov/2026 09:24:36] "GET /api/status HTTP/1.1" 200 -

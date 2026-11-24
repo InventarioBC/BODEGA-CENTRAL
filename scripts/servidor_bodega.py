@@ -259,6 +259,27 @@ def update_launcher_files(public_url: str, local_ip: str, port: int) -> None:
     LAUNCHER_HTML_FILE.write_text(html_content, encoding="utf-8")
     print(f"[OK] Archivos lanzadores móviles actualizados: {LAUNCHER_HTML_FILE}")
 
+    if public_url:
+        clean_url = public_url.rstrip("/")
+        for target_file in [BASE_DIR / "index.html", BASE_DIR / "Buscador_Bodega_Central.html"]:
+            if target_file.exists():
+                try:
+                    txt = target_file.read_text(encoding="utf-8")
+                    new_txt = re.sub(r"const BACKEND_TUNNEL_URL = '[^']*';", f"const BACKEND_TUNNEL_URL = '{clean_url}/';", txt)
+                    if new_txt != txt:
+                        target_file.write_text(new_txt, encoding="utf-8")
+                except Exception as e_up:
+                    print(f"[WARN] Error actualizando BACKEND_TUNNEL_URL en {target_file.name}: {e_up}")
+
+        def _bg_push():
+            try:
+                auto_push_script = Path(r"C:\Bodega\scripts\git_auto_push.py")
+                if auto_push_script.exists():
+                    subprocess.run([sys.executable, str(auto_push_script)], capture_output=True, timeout=45)
+            except Exception:
+                pass
+        threading.Thread(target=_bg_push, daemon=True).start()
+
 
 LAST_SERVER_UPDATE = time.time()
 

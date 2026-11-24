@@ -1861,6 +1861,29 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             }}
             return endpoint;
         }}
+
+        async function fetchAutoBackendUrl() {{
+            try {{
+                const res = await fetch('https://raw.githubusercontent.com/InventarioBC/BODEGA-CENTRAL/main/url_celular.txt?t=' + Date.now(), {{ cache: 'no-store' }});
+                if (res.ok) {{
+                    const text = await res.text();
+                    for (const line of text.split('\\n')) {{
+                        if (line.includes('trycloudflare.com') || line.includes('lhr.life')) {{
+                            const m = line.match(/https:\\/\\/[^\\s]+/);
+                            if (m) {{
+                                const newUrl = m[0].split('?')[0].trim();
+                                if (newUrl && newUrl !== localStorage.getItem('bodega_backend_url')) {{
+                                    localStorage.setItem('bodega_backend_url', newUrl);
+                                    console.log('[BACKEND] URL del servidor actualizada automticamente:', newUrl);
+                                    return newUrl;
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }} catch(e) {{}}
+            return null;
+        }}
         let whFilter = 'all';
         let stFilter = 'all';
         let currentMatches = [];
@@ -4960,10 +4983,68 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 refreshKpis();
                 applyFilters();
             }} catch(err) {{
-                console.error("Error guardando pallet:", err);
-                alertBox.className = 'alert alert-danger';
-                alertBox.innerHTML = `Error guardando en el servidor: ${{err.message}}`;
+                console.warn("Servidor no disponible directamente, guardando localmente en dispositivo:", err);
+
+                for (const itm of window.palletMaterialsList) {{
+                    const locPayload = {{
+                        codigo: itm.codigo,
+                        pallet: palletVal,
+                        ubicacion: rackVal,
+                        cantidad_pallet: itm.cantidad,
+                        guia: guiaVal,
+                        proveedor: provVal,
+                        descripcion: itm.descripcion,
+                        foto_base64: currentCapturedBase64 || "",
+                        timestamp: new Date().toISOString()
+                    }};
+                    savePalletLocally(itm.codigo, locPayload);
+
+                    const matObj = INVENTORY_DATA.find(x => x.c === itm.codigo);
+                    if (matObj) {{
+                        if (!matObj.photos) matObj.photos = [];
+                        let existingP = matObj.photos.find(p => p.pallet.toLowerCase() === palletVal.toLowerCase());
+                        if (existingP) {{
+                            existingP.ubic = rackVal;
+                            existingP.cant = itm.cantidad;
+                            existingP.guia = guiaVal;
+                            existingP.prov = provVal;
+                        }} else {{
+                            matObj.photos.push({{
+                                pallet: palletVal,
+                                ubic: rackVal,
+                                file: "",
+                                cant: itm.cantidad,
+                                guia: guiaVal,
+                                prov: provVal,
+                                desc: matObj.d
+                            }});
+                        }}
+                        matObj.photo = matObj.photos[0];
+                        matObj.pallet_lbl = matObj.photos.map(p => `${{p.pallet}} (${{p.ubic}})`).join(' | ');
+                        matObj.g_str = (matObj.g_str || '') + ` ${{palletVal}} ${{rackVal}}`;
+                    }}
+                }}
+
+                alertBox.className = 'alert alert-warning shadow-sm border-warning';
+                alertBox.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <h6 class="fw-bold mb-1"><i class="bi bi-clock-history text-warning me-2"></i>¡Bulto guardado en tu celular!</h6>
+                            <p class="mb-0 small">Guardado seguro en este dispositivo. Se sincronizará con el computador cuando esté conectado.</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-warning btn-sm fw-bold" onclick="resetCameraForm()">
+                                <i class="bi bi-plus-circle me-1"></i>Nuevo Pallet
+                            </button>
+                        </div>
+                    </div>`;
                 alertBox.style.display = 'block';
+                showToast(`💾 ¡${{palletVal}} guardado en tu celular!`);
+                renderRegisteredPalletsGrid();
+                renderPalletQuickChips();
+                refreshKpis();
+                applyFilters();
+                setTimeout(fetchAutoBackendUrl, 500);
             }} finally {{
                 if (btn) {{
                     btn.disabled = false;
@@ -5743,6 +5824,37 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 it69.photos = [];
                 it69.pallet_lbl = '';
             }}
+
+            // Cargar y asegurar que los pallets guardados localmente siempre aparezcan
+            for (const code of Object.keys(store)) {{
+                const p = store[code];
+                if (!p || !p.pallet) continue;
+                const it = INVENTORY_DATA.find(x => x.c === code);
+                if (it) {{
+                    if (!it.photos) it.photos = [];
+                    let existing = it.photos.find(x => x.pallet && x.pallet.toLowerCase() === p.pallet.toLowerCase());
+                    if (existing) {{
+                        existing.ubic = p.ubicacion || existing.ubic;
+                        existing.cant = p.cantidad_pallet || existing.cant;
+                        existing.guia = p.guia || existing.guia;
+                        existing.prov = p.proveedor || existing.prov;
+                        if (p.foto_base64) existing.file = p.foto_base64;
+                    }} else {{
+                        it.photos.push({{
+                            pallet: p.pallet,
+                            ubic: p.ubicacion || '',
+                            file: p.foto_base64 || '',
+                            cant: p.cantidad_pallet || 0,
+                            guia: p.guia || '',
+                            prov: p.proveedor || '',
+                            desc: it.d
+                        }});
+                    }}
+                    it.photo = it.photos[0];
+                    it.pallet_lbl = it.photos.map(x => `${{x.pallet}} (${{x.ubic}})`).join(' | ');
+                    it.g_str = (it.g_str || '') + ` ${{p.pallet}} ${{p.ubicacion || ''}}`;
+                }}
+            }}
         }}
 
         async function fetchServerPallets() {{
@@ -5842,9 +5954,20 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
             showToast('⏳ Sincronizando inventario con el computador...');
 
             try {{
-                const syncUrl = getApiUrl('/api/sync_inventory?t=' + Date.now());
+                let syncUrl = getApiUrl('/api/sync_inventory?t=' + Date.now());
+                let resp;
+                try {{
+                    resp = await fetch(syncUrl, {{ method: 'GET' }});
+                }} catch(netErr) {{
+                    const newServer = await fetchAutoBackendUrl();
+                    if (newServer) {{
+                        syncUrl = getApiUrl('/api/sync_inventory?t=' + Date.now());
+                        resp = await fetch(syncUrl, {{ method: 'GET' }});
+                    }} else {{
+                        throw netErr;
+                    }}
+                }}
 
-                const resp = await fetch(syncUrl, {{ method: 'GET' }});
                 if (!resp.ok) {{
                     throw new Error('Servidor respondió con código ' + resp.status);
                 }}
@@ -5864,10 +5987,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                     if (invLbl) invLbl.textContent = `Última actualización: ${{data.sync_ts}} · Depto. Eléctrico`;
                 }}
 
-                // 3. Limpiar storage obsoleto
+                // 3. Preservar y re-aplicar pallets locales para nunca perder datos
                 try {{
-                    localStorage.removeItem('BODEGA_LOCAL_PALLETS');
-                    localStorage.removeItem('bodega_local_pallets');
+                    applyLocalPallets();
+                    await syncPendingPalletsToServer();
                 }} catch(e) {{}}
 
                 // 4. Refrescar vistas, KPIs y filtros
@@ -5883,8 +6006,10 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
                 showToast(`✅ ¡Inventario y Pallets 100% actualizados! (${{data.total_items}} materiales)`);
             }} catch(err) {{
                 console.error('Error al sincronizar:', err);
-                showToast('⚠️ Error al sincronizar: ' + err.message);
-                alert('No se pudo sincronizar con el computador:\\n' + err.message + '\\n\\nVerifica que el computador tenga el servidor abierto y conectado a internet.');
+                showToast('⚠️ No conectado al computador. Datos locales intactos.');
+                applyLocalPallets();
+                renderRegisteredPalletsGrid();
+                alert('No se pudo conectar con el computador:\\n' + err.message + '\\n\\nNota importante: Tus bultos registrados siguen guardados de forma segura en este celular y NO se han borrado.\\n\\nVerifica que el computador tenga el servidor abierto y conectado a internet.');
             }} finally {{
                 isSyncingInventory = false;
                 syncBtns.forEach(b => {{
@@ -5974,12 +6099,9 @@ def generate_html_dashboard(items: list[dict], out_path: Path, sync_ts: str, src
         }}
 
         function initApp() {{
-            // Limpieza inicial para comenzar 100% desde cero (v29)
             try {{
-                if (localStorage.getItem('BODEGA_RESET_V29') !== '1') {{
-                    localStorage.removeItem('BODEGA_LOCAL_PALLETS');
-                    localStorage.removeItem('bodega_local_pallets');
-                    localStorage.setItem('BODEGA_RESET_V29', '1');
+                if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {{
+                    fetchAutoBackendUrl();
                 }}
             }} catch(e) {{}}
 
