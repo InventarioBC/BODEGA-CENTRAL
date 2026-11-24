@@ -1,1 +1,100 @@
-{}
+{
+  "1UA0170": {
+    "pallets": [
+      {
+        "pallet": "Bulto 1",
+        "ubicacion": "Rack 5A9",
+        "foto": "BULTO 1.jpeg",
+        "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM ROJO",
+        "guia": "9836",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:03",
+        "fecha_edicion": "24/11/2026 12:12"
+      },
+      {
+        "pallet": "Bulto 2",
+        "ubicacion": "Rack 5A7",
+        "foto": "BULTO 2.jpeg",
+        "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM ROJO",
+        "guia": "62442",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:05"
+      }
+    ],
+    "pallet": "Bulto 1",
+    "ubicacion": "Rack 5A9",
+    "foto": "BULTO 1.jpeg",
+    "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM ROJO",
+    "guia": "9836",
+    "cantidad_pallet": 7500.0,
+    "proveedor": "CBM",
+    "fecha_registro": "24/11/2026 12:05",
+    "fecha_edicion": "24/11/2026 12:12"
+  },
+  "1UA0154": {
+    "pallets": [
+      {
+        "pallet": "Bulto 1",
+        "ubicacion": "5A9",
+        "foto": "FOTOS/BULTO 1.jpeg",
+        "descripcion": "CABLE UNIPOLAR HO7Z1_K EVA REVESTIMIENTO FREETOX-FLEX 2,5 MM BLANCO",
+        "guia": "9836",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:03"
+      },
+      {
+        "pallet": "Bulto 2",
+        "ubicacion": "Rack 5A7",
+        "foto": "FOTOS/BULTO 2.jpeg",
+        "descripcion": "CABLE UNIPOLAR HO7Z1_K EVA REVESTIMIENTO FREETOX-FLEX 2,5 MM BLANCO",
+        "guia": "62442",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:05"
+      }
+    ],
+    "pallet": "Bulto 2",
+    "ubicacion": "Rack 5A7",
+    "foto": "FOTOS/BULTO 2.jpeg",
+    "descripcion": "CABLE UNIPOLAR HO7Z1_K EVA REVESTIMIENTO FREETOX-FLEX 2,5 MM BLANCO",
+    "guia": "62442",
+    "cantidad_pallet": 7500.0,
+    "proveedor": "CBM",
+    "fecha_registro": "24/11/2026 12:05"
+  },
+  "1UA0172": {
+    "pallets": [
+      {
+        "pallet": "Bulto 1",
+        "ubicacion": "5A9",
+        "foto": "FOTOS/BULTO 1.jpeg",
+        "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM VERDE",
+        "guia": "9836",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:03"
+      },
+      {
+        "pallet": "Bulto 2",
+        "ubicacion": "Rack 5A7",
+        "foto": "FOTOS/BULTO 2.jpeg",
+        "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM VERDE",
+        "guia": "62442",
+        "cantidad_pallet": 7500.0,
+        "proveedor": "CBM",
+        "fecha_registro": "24/11/2026 12:05"
+      }
+    ],
+    "pallet": "Bulto 2",
+    "ubicacion": "Rack 5A7",
+    "foto": "FOTOS/BULTO 2.jpeg",
+    "descripcion": "CABLE UNIPOLAR H07Z1-K EVA REVESTIMIENTO FREETOX -FLEX 2,5 MM VERDE",
+    "guia": "62442",
+    "cantidad_pallet": 7500.0,
+    "proveedor": "CBM",
+    "fecha_registro": "24/11/2026 12:05"
+  }
+}
